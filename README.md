@@ -32,7 +32,7 @@ Filebeats -> Kibana -> Logstash -> Elastic Search -> Kibana
 
 ```bash
 make build
-make dev
+make devfb
 make topic TOPIC=my-topic
 make produce TOPIC=my-topic
 make consume TOPIC=my-topic
