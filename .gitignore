@@ -1,3 +1,5 @@
 certs
 storage
 test.json
+.venv
+.vscode

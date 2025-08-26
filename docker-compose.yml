@@ -1,0 +1,153 @@
+services:
+  setup:
+    container_name: setup
+    user: "0"
+    build:
+      context: setup/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    init: true
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-changeme}
+      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD:-changeme}
+      KIBANA_PASSWORD: ${KIBANA_PASSWORD:-changeme}
+
+  es01:
+    container_name: es01
+    depends_on:
+      - setup
+    build:
+      context: elasticsearch/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    volumes:
+      - ./storage/elasticsearch/es01:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/local/es01.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - cluster.name=${CLUSTER_NAME}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  es02:
+    container_name: es02
+    depends_on:
+      - es01
+    build:
+      context: elasticsearch/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    volumes:
+      - ./storage/elasticsearch/es02:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/local/es02.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    environment:
+      - cluster.name=${CLUSTER_NAME}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  es03:
+    container_name: es03
+    depends_on:
+      - es02
+    build:
+      context: elasticsearch/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    volumes:
+      - ./storage/elasticsearch/es03:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/local/es03.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    environment:
+      - cluster.name=${CLUSTER_NAME}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  kibana:
+    container_name: kibana
+    depends_on:
+      - es01
+      - es02
+      - es03
+    build:
+      context: kibana/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    volumes:
+      - ./storage/kibana:/usr/share/kibana/data
+      - ./kibana/config/local/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - ${KIBANA_PORT}:5601
+    environment:
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    mem_limit: ${MEM_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  logstash:
+    container_name: logstash
+    depends_on:
+      - es01
+      - es02
+      - es03
+    build:
+      context: logstash/
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    volumes:
+      - ./storage/logstash:/usr/share/logstash/data
+      - ./logstash/pipeline/local:/usr/share/logstash/pipeline
+      - ./logstash/config/local/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5044:5044"
+      - "50000:50000/tcp"
+      - "50000:50000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-changeme}
+
+  zookeeper:
+    container_name: zookeeper
+    build:
+      context: zookeeper/
+    restart: always
+    hostname: zookeeper
+    ports:
+      - "${ZOOKEEPER_PORT}:2181"
+    environment:
+      ZOO_MY_ID: 1
+
+  kafka:
+    container_name: kafka
+    build:
+      context: kafka/
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT}:9092"
+    volumes:
+      - ./storage/kafka:/kafka
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_PORT: "${KAFKA_PORT}"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:${ZOOKEEPER_PORT}"
+      KAFKA_CREATE_TOPICS: "${TOPIC_NAME}:1:1"

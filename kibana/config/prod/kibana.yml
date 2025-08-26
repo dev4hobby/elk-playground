@@ -1,0 +1,16 @@
+server.name: genesis-004
+server.host: 0.0.0.0
+server.shutdownTimeout: "5s"
+elasticsearch.hosts: ['http://10.20.32.9:9200', 'http://10.20.32.10:9200', 'http://10.20.32.11:9200']
+# monitoring.ui.container.elasticsearch.enabled: true
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders:
+      - default
+      - file

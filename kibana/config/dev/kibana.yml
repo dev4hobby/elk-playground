@@ -1,0 +1,17 @@
+---
+server.name: elkpg-dev-001
+server.host: 0.0.0.0
+server.shutdownTimeout: "5s"
+elasticsearch.hosts: ['http://10.10.17.12:9200', 'http://10.10.17.13:9200']
+# monitoring.ui.container.elasticsearch.enabled: true
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders:
+      - default
+      - file

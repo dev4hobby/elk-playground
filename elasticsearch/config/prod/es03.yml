@@ -1,0 +1,14 @@
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+cluster.name: elkpg
+node.name: elkpg-prd-003
+network.bind_host: 0.0.0.0
+network.publish_host: 10.20.32.11
+http.port: 9200
+discovery.seed_hosts: ["10.20.32.9", "10.20.32.10", "10.20.32.11"]
+cluster.initial_master_nodes: ["10.20.32.9", "10.20.32.10", "10.20.32.11"]
+bootstrap.memory_lock: true
+xpack.security.enabled: false
+xpack.security.transport.ssl.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.license.self_generated.type: basic

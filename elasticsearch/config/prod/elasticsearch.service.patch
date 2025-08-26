@@ -1,0 +1,10 @@
+--- elasticsearch.service	2024-03-07 11:24:27
++++ elasticsearch.service.new	2024-03-07 11:24:36
+@@ -45,6 +45,7 @@
+ 
+ # Specifies the maximum file size
+ LimitFSIZE=infinity
++LimitMEMLOCK=infinity
+ 
+ # Disable timeout logic and wait until process is stopped
+ TimeoutStopSec=0
